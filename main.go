@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/http/fcgi"
+	"path/filepath"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -43,13 +46,24 @@ func RSVPFormHandler() http.Handler {
 		var (
 			fullName    = r.PostFormValue("FullName")
 			attending   = r.PostFormValue("Attending") == "yes"
-			plusOne     = r.PostFormValue("PlusOne") == "on"
+			plusOne     = r.PostFormValue("PlusOne") == "yes"
 			plusOneName = r.PostFormValue("PlusOneName")
 		)
 		log.Printf("full name: %s\n", fullName)
 		log.Printf("attending: %t\n", attending)
 		log.Printf("plus one?: %t\n", plusOne)
 		log.Printf("plus one full name: %s\n", plusOneName)
+
+		cookie := fullName
+		if plusOne {
+			cookie += fmt.Sprintf(" (+%s)", plusOneName)
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:  "rsvp",
+			Value: cookie,
+		})
+
 		if err := t.ExecuteTemplate(w, "_base.html", &TemplateData{r: r}); err != nil {
 			panic(err)
 		}
@@ -97,7 +111,36 @@ func (d *TemplateData) Path(name string, pairs ...string) string {
 	return url.Path
 }
 
+func (d *TemplateData) Photos() []string {
+	photos, _ := filepath.Glob("static/pictures/*")
+	// shuffle: https://stackoverflow.com/a/12267471/823762
+	for i := range photos {
+		j := rand.Intn(i + 1)
+		photos[i], photos[j] = photos[j], photos[i]
+	}
+	return photos
+}
+
+func (d *TemplateData) DaysLeft() int {
+	location, err := time.LoadLocation("America/Chicago")
+	if err != nil {
+		log.Printf("unable to load location: %s\n", err)
+		return 0
+	}
+	weddingDate := time.Date(2018, 10, 5, 0, 0, 0, 0, location)
+	return int(weddingDate.Sub(time.Now()) / (time.Hour * 24))
+}
+
+func (d *TemplateData) RSVPed() string {
+	if cookie, err := d.r.Cookie("rsvp"); err == nil {
+		return cookie.Value
+	}
+	return ""
+}
+
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", PORT))
 	if err != nil {
 		log.Fatal(err)

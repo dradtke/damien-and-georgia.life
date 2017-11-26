@@ -1,41 +1,68 @@
 {{define "title"}}RSVP{{end}}
 
 {{define "content"}}
-  <form id="rsvpForm" method="POST">
-    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-    <div class="form-group">
-      <label for="formName">Full Name</label>
-      <input type="text" class="form-control" id="formName" name="FullName" placeholder="Enter your full name" autocomplete="false" required>
+  <style type="text/css">
+    button {
+      cursor: pointer;
+    }
+  </style>
+
+  <h1 class="display-4">
+    RSVP
+  </h1>
+  <p class="lead">
+    Fill out this form to let us know if you're coming!
+  </p>
+  <hr>
+  {{with .RSVPed}}
+    <div class="alert alert-info" role="alert">
+      Thanks for RSVP'ing, <strong>{{.}}</strong>!
     </div>
-    <br>
-    <div class="form-group">
-      <label>Are you attending?</label><br>
-      <div class="form-check-inline">
-        <label class="form-check-label">
-          <input type="radio" class="form-check-input" name="Attending" value="yes" selected="false" required> Yes
-        </label>
+  {{else}}
+    <form id="rsvpForm" method="POST">
+      <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+      <div class="form-group">
+        <label for="formName">Full Name</label>
+        <input type="text" class="form-control" id="formName" name="FullName" placeholder="Enter your full name" autocomplete="false" required>
       </div>
-      <div class="form-check-inline">
-        <label class="form-check-label">
-          <input type="radio" class="form-check-input" name="Attending" value="no" selected="false" required> No
-        </label>
+      <br>
+      <div class="form-group">
+        <label>Are you attending?</label><br>
+        <div class="form-check-inline">
+          <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="Attending" value="yes" selected="false" required> Yes
+          </label>
+        </div>
+        <div class="form-check-inline">
+          <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="Attending" value="no" selected="false" required> No
+          </label>
+        </div>
       </div>
-    </div>
-    <div class="form-check d-none" id="groupPlusOne">
+      <div class="form-group d-none" id="groupPlusOne">
+        <label>Need a +1?</label><br>
+        <div class="form-check-inline">
+          <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="PlusOne" value="yes" selected="false"> Yes
+          </label>
+        </div>
+        <div class="form-check-inline">
+          <label class="form-check-label">
+            <input type="radio" class="form-check-input" name="PlusOne" value="no" selected="false"> No
+          </label>
+        </div>
+      </div>
+      <div class="form-group d-none" id="groupPlusOneName">
+        <br>
+        <label for="formPlusOneName">Full Name of Your +1</label>
+        <input type="text" class="form-control" id="formPlusOneName" name="PlusOneName" placeholder="Enter his or her full name" autocomplete="false">
+      </div>
       <br>
-      <label class="form-check-label">
-        <input type="checkbox" class="form-check-input" name="PlusOne" autocomplete="false">
-        Need a +1?
-      </label>
-    </div>
-    <div class="form-group d-none" id="groupPlusOneName">
-      <br>
-      <label for="formPlusOneName">Full Name of Your +1</label>
-      <input type="text" class="form-control" id="formPlusOneName" name="PlusOneName" placeholder="Enter his or her full name" autocomplete="false">
-    </div>
-    <br>
-    <button type="submit" class="btn btn-primary">Save</button>
-  </form>
+      <button type="submit" class="btn btn-primary btn-lg">
+        Save
+      </button>
+    </form>
+  {{end}}
 {{end}}
 
 {{define "scripts"}}
