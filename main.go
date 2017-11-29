@@ -3,30 +3,76 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/http/fcgi"
+	"net/url"
+	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 	"github.com/justinas/alice"
 	"github.com/justinas/nosurf"
+	"golang.org/x/crypto/bcrypt"
 )
 
-const PORT = 8080
+const (
+	Port           = 8080
+	AuthCookieName = "auth"
+)
 
 var (
 	router *mux.Router
+	sc     = securecookie.New(securecookie.GenerateRandomKey(64), nil)
 )
+
+func accessGranted(r *http.Request) bool {
+	if mux.CurrentRoute(r).GetName() == "login" {
+		return true
+	}
+
+	cookie, err := r.Cookie(AuthCookieName)
+	if err != nil {
+		return false
+	}
+
+	var value string
+	if err = sc.Decode(AuthCookieName, cookie.Value, &value); err != nil {
+		return false
+	}
+
+	return value == "authenticated"
+}
+
+func mustLogin(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:   AuthCookieName,
+		MaxAge: -1,
+	})
+	path, err := router.Get("login").URL()
+	if err != nil {
+		panic(err)
+	}
+	v := url.Values{}
+	v.Add("redirect", r.URL.Path)
+	http.Redirect(w, r, path.String()+"?"+v.Encode(), http.StatusFound)
+}
 
 func PageHandler(name string) http.Handler {
 	t := template.Must(template.New("").ParseFiles(
 		"templates/_base.html", "templates/"+name+".html",
 	))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !accessGranted(r) {
+			mustLogin(w, r)
+			return
+		}
+
 		// TODO: remove this when things are stabilized
 		t = template.Must(template.New("").ParseFiles(
 			"templates/_base.html", "templates/"+name+".html",
@@ -67,6 +113,30 @@ func RSVPFormHandler() http.Handler {
 		if err := t.ExecuteTemplate(w, "_base.html", &TemplateData{r: r}); err != nil {
 			panic(err)
 		}
+	})
+}
+
+func LoginHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hash, err := ioutil.ReadFile("password")
+		if err != nil {
+			panic(err)
+		}
+		password := []byte(r.PostFormValue("Password"))
+		if err := bcrypt.CompareHashAndPassword(hash, password); err != nil {
+			http.Redirect(w, r, r.Referer(), http.StatusFound)
+			return
+		}
+
+		encoded, err := sc.Encode(AuthCookieName, "authenticated")
+		if err != nil {
+			panic(err)
+		}
+		http.SetCookie(w, &http.Cookie{
+			Name:  AuthCookieName,
+			Value: encoded,
+		})
+		http.Redirect(w, r, r.FormValue("redirect"), http.StatusFound)
 	})
 }
 
@@ -138,22 +208,33 @@ func (d *TemplateData) RSVPed() string {
 	return ""
 }
 
+func (d *TemplateData) GoogleAPIKey() string {
+	return os.Getenv("GOOGLE_API_KEY")
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", PORT))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	router = mux.NewRouter()
 	router.Handle("/", PageHandler("index")).Methods("GET").Name("index")
-	router.Handle("/accommodations", PageHandler("details_accommodations")).Methods("GET").Name("details-accommodations")
-	router.Handle("/travel-and-transportation", PageHandler("details_travel_and_transportation")).Methods("GET").Name("details-travel-and-transportation")
-	router.Handle("/things-to-do", PageHandler("details_things_to_do")).Methods("GET").Name("details-things-to-do")
-	router.Handle("/photos", PageHandler("photos")).Methods("GET").Name("photos")
-	router.Handle("/rsvp", PageHandler("rsvp")).Methods("GET").Name("rsvp")
+
+	for _, p := range []string{
+		"login",
+		"about-us",
+		"the-wedding",
+		"chicago",
+		"photos",
+		"rsvp",
+	} {
+		router.Handle("/"+p, PageHandler(p)).Methods("GET").Name(p)
+	}
 	router.Handle("/rsvp", RSVPFormHandler()).Methods("POST")
+	router.Handle("/login", LoginHandler()).Methods("POST")
 	router.PathPrefix("/static/").Methods("GET").Handler(
 		http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))),
 	)
@@ -163,7 +244,7 @@ func main() {
 		nosurf.NewPure,
 	).Then(router)
 
-	log.Printf("listening on :%d\n", PORT)
+	log.Printf("listening on :%d\n", Port)
 	if err := fcgi.Serve(listener, chain); err != nil {
 		log.Fatal(err)
 	}

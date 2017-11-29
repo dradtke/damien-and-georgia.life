@@ -1,10 +1,32 @@
 {{define "content"}}
   <style type="text/css">
+		#the-nav {
+			background-color: inherit !important;
+		}
+
     body {
-      background: url("https://i.ytimg.com/vi/ljiTg9-UOiI/maxresdefault.jpg") no-repeat fixed center;
+      background: url("https://s3.amazonaws.com/architecture-org/files/modules/lacuna-artist-lofts-eric-allix-rogers-03.jpg") no-repeat fixed center;
+			background-size: cover;
     }
+
+		h1 {
+				color: white;
+       	text-shadow: 2px 2px 2px black;
+				font-weight: bold;
+		}
+
+		p {
+				color: white;
+       	text-shadow: 1px 1px 1px black;
+		}
   </style>
 
+	<div class="text-center">
+		<h1 class="display-1">October 5<sup>th</sup>, 2018</h1>
+		<p>Just {{.DaysLeft}} day{{if ne .DaysLeft 1}}s{{end}} to go!</p>
+	</div>
+
+	<!--
   <div class="jumbotron">
     <h1 class="display-3">
       October 5<sup>th</sup>, 2018
@@ -14,6 +36,7 @@
     <p>Just {{.DaysLeft}} day{{if ne .DaysLeft 1}}s{{end}} to go!</p>
     <a class="btn btn-primary btn-lg" href="{{.Path `rsvp`}}">Click here to RSVP</a>
   </div>
+	-->
 {{end}}
 
 {{define "scripts"}}

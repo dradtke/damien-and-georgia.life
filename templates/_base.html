@@ -10,27 +10,24 @@
   </head>
 
   <body>
-		<nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-primary">
-			<a class="navbar-brand" href="{{.Path `index`}}">Damien &amp; Georgia</a>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
+		<nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-primary" id="the-nav">
+      {{block "nav-content" .}}
+        <a class="navbar-brand" href="{{.Path `index`}}">Damien &amp; Georgia</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
 
-			<div class="collapse navbar-collapse" id="navbarSupportedContent">
-				<ul class="navbar-nav mr-auto">
-					<li class="nav-item dropdown {{if .IsActive `details-accommodations` `details-travel-and-transportation` `details-things-to-do`}}active{{end}}">
-						<a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown">Details</a>
-						<div class="dropdown-menu">
-							<a class="dropdown-item" href="{{.Path `details-accommodations`}}">Accommodations</a>
-							<a class="dropdown-item" href="{{.Path `details-travel-and-transportation`}}">Travel and Transportation</a>
-							<a class="dropdown-item" href="{{.Path `details-things-to-do`}}">Things to Do</a>
-						</div>
-					</li>
-					<li class="nav-item {{if .IsActive `photos`}}active{{end}}"><a class="nav-link" href="{{.Path `photos`}}">Photos</a></li>
-					<li class="nav-item {{if .IsActive `registry`}}active{{end}}"><a class="nav-link" href="https://www.zola.com/registry/damienandgeorgia" target="_blank">Registry&nbsp;<i class="fa fa-external-link"></i></a></li>
-					<li class="nav-item {{if .IsActive `rsvp`}}active{{end}}"><a class="nav-link" href="{{.Path `rsvp`}}">RSVP</a></li>
-				</ul>
-			</div>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item {{if .IsActive `about-us`}}active{{end}}"><a class="nav-link" href="{{.Path `about-us`}}">About Us</a></li>
+            <li class="nav-item {{if .IsActive `the-wedding`}}active{{end}}"><a class="nav-link" href="{{.Path `the-wedding`}}">The Wedding</a></li>
+            <li class="nav-item {{if .IsActive `chicago`}}active{{end}}"><a class="nav-link" href="{{.Path `chicago`}}">Chicago</a></li>
+            <li class="nav-item {{if .IsActive `photos`}}active{{end}}"><a class="nav-link" href="{{.Path `photos`}}">Photos</a></li>
+            <li class="nav-item {{if .IsActive `rsvp`}}active{{end}}"><a class="nav-link" href="{{.Path `rsvp`}}">RSVP</a></li>
+            <li class="nav-item {{if .IsActive `registry`}}active{{end}}"><a class="nav-link" href="https://www.zola.com/registry/damienandgeorgia" target="_blank">Registry&nbsp;<i class="fa fa-external-link"></i></a></li>
+          </ul>
+        </div>
+      {{end}}
 		</nav>
     <div class="container">
       <br>

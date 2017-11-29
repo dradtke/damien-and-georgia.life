@@ -1,0 +1,29 @@
+{{define "nav-content"}}
+  <!-- nothing -->
+{{end}}
+
+{{define "content"}}
+  <style type="text/css">
+    button {
+      cursor: pointer;
+    }
+  </style>
+
+  <form method="POST" id="loginForm">
+    <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+    <div class="form-group">
+      <div class="input-group">
+        <div class="input-group-addon"><i class="fa fa-user-secret"></i></div>
+        <input type="password" class="form-control" name="Password" placeholder="Password">
+      </div>
+    </div>
+    <br>
+    <button type="submit" class="btn btn-primary btn-lg">
+      Log In
+    </button>
+  </form>
+{{end}}
+
+{{define "scripts"}}
+  <script type="text/javascript" src="/static/login.js"></script>
+{{end}}
