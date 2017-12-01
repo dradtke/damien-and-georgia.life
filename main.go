@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -18,6 +19,7 @@ import (
 	"github.com/gorilla/securecookie"
 	"github.com/justinas/alice"
 	"github.com/justinas/nosurf"
+	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -27,6 +29,7 @@ const (
 )
 
 var (
+	db     *sql.DB
 	router *mux.Router
 	sc     = securecookie.New(securecookie.GenerateRandomKey(64), nil)
 )
@@ -88,6 +91,9 @@ func RSVPFormHandler() http.Handler {
 	t := template.Must(template.New("").ParseFiles(
 		"templates/_base.html", "templates/rsvp-submitted.html",
 	))
+	errt := template.Must(template.New("").ParseFiles(
+		"templates/_base.html", "templates/rsvp-error.html",
+	))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var (
 			fullName    = r.PostFormValue("FullName")
@@ -95,23 +101,31 @@ func RSVPFormHandler() http.Handler {
 			plusOne     = r.PostFormValue("PlusOne") == "yes"
 			plusOneName = r.PostFormValue("PlusOneName")
 		)
-		log.Printf("full name: %s\n", fullName)
-		log.Printf("attending: %t\n", attending)
-		log.Printf("plus one?: %t\n", plusOne)
-		log.Printf("plus one full name: %s\n", plusOneName)
 
-		cookie := fullName
-		if plusOne {
-			cookie += fmt.Sprintf(" (+%s)", plusOneName)
-		}
+		if _, err := db.Exec("insert into rsvp (full_nam, attending, plus_one, plus_one_full_name) values ($1, $2, $3, $4)", fullName, attending, plusOne, plusOneName); err != nil {
+			if rerr := errt.ExecuteTemplate(w, "_base.html", &struct {
+				TemplateData
+				Err error
+			}{
+				TemplateData: TemplateData{r: r},
+				Err:          err,
+			}); rerr != nil {
+				panic(rerr)
+			}
+		} else {
+			cookie := fullName
+			if plusOne {
+				cookie += fmt.Sprintf(" (+%s)", plusOneName)
+			}
 
-		http.SetCookie(w, &http.Cookie{
-			Name:  "rsvp",
-			Value: cookie,
-		})
+			http.SetCookie(w, &http.Cookie{
+				Name:  "rsvp",
+				Value: cookie,
+			})
 
-		if err := t.ExecuteTemplate(w, "_base.html", &TemplateData{r: r}); err != nil {
-			panic(err)
+			if err := t.ExecuteTemplate(w, "_base.html", &TemplateData{r: r}); err != nil {
+				panic(err)
+			}
 		}
 	})
 }
@@ -216,6 +230,11 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db, err = sql.Open("postgres", "user=damien dbname=damien host=/tmp sslmode=disable")
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,16 +1,16 @@
 <!DOCTYPE html>
 <html>
   <head>
-  <title>Damien &amp; Georgia &mdash; {{block "title" .}}Home{{end}}</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <link href="https://fonts.googleapis.com/css?family=Courgette" rel="stylesheet">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
-	<link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css">
+    <title>Damien &amp; Georgia &mdash; {{block "title" .}}Home{{end}}</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://fonts.googleapis.com/css?family=Courgette" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css">
   </head>
 
   <body>
-		<nav class="navbar navbar-expand-lg sticky-top navbar-dark bg-primary" id="the-nav">
+    <nav class="navbar navbar-expand-lg sticky-top navbar-light bg-light" id="the-nav">
       {{block "nav-content" .}}
         <a class="navbar-brand" href="{{.Path `index`}}">Damien &amp; Georgia</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -18,7 +18,7 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-          <ul class="navbar-nav mr-auto">
+          <ul class="navbar-nav ml-auto">
             <li class="nav-item {{if .IsActive `about-us`}}active{{end}}"><a class="nav-link" href="{{.Path `about-us`}}">About Us</a></li>
             <li class="nav-item {{if .IsActive `the-wedding`}}active{{end}}"><a class="nav-link" href="{{.Path `the-wedding`}}">The Wedding</a></li>
             <li class="nav-item {{if .IsActive `chicago`}}active{{end}}"><a class="nav-link" href="{{.Path `chicago`}}">Chicago</a></li>
@@ -28,11 +28,11 @@
           </ul>
         </div>
       {{end}}
-		</nav>
+    </nav>
     <div class="container">
       <br>
       {{block "content" .}}{{end}}
-			<br>
+      <br>
     </div>
   </body>
 
