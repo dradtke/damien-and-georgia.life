@@ -1,6 +1,21 @@
 {{define "title"}}Photos{{end}}
 
 {{define "content"}}
+  <style>
+    .photo {
+      display: block;
+      max-width: 720px;
+      max-height: 480px;
+      width: auto;
+      height: auto;
+      margin: auto;
+    }
+
+    .carousel-inner {
+      background: rgba(0, 0, 0, 0.15);
+    }
+  </style>
+
   <h1 class="display-4">
     Photos
   </h1>
@@ -11,7 +26,7 @@
 				<div class="carousel-inner">
 					{{range $i, $photo := .Photos}}
 						<div class="carousel-item{{if eq $i 0}} active{{end}}">
-							<img class="d-block w-100 img-fluid" src="/{{$photo}}">
+							<img class="img-fluid photo" src="/{{$photo}}">
 						</div>
 					{{end}}
 				</div>

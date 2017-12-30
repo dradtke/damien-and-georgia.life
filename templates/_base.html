@@ -22,15 +22,21 @@
             <li class="nav-item {{if .IsActive `about-us`}}active{{end}}"><a class="nav-link" href="{{.Path `about-us`}}">About Us</a></li>
             <li class="nav-item {{if .IsActive `the-wedding`}}active{{end}}"><a class="nav-link" href="{{.Path `the-wedding`}}">The Wedding</a></li>
             <li class="nav-item {{if .IsActive `chicago`}}active{{end}}"><a class="nav-link" href="{{.Path `chicago`}}">Chicago</a></li>
+            <li class="nav-item {{if .IsActive `accommodations`}}active{{end}}"><a class="nav-link" href="{{.Path `accommodations`}}">Accommodations</a></li>
             <li class="nav-item {{if .IsActive `photos`}}active{{end}}"><a class="nav-link" href="{{.Path `photos`}}">Photos</a></li>
             <li class="nav-item {{if .IsActive `rsvp`}}active{{end}}"><a class="nav-link" href="{{.Path `rsvp`}}">RSVP</a></li>
             <li class="nav-item {{if .IsActive `registry`}}active{{end}}"><a class="nav-link" href="https://www.zola.com/registry/damienandgeorgia" target="_blank">Registry&nbsp;<i class="fa fa-external-link"></i></a></li>
+            <li class="nav-item {{if .IsActive `about-website`}}active{{end}}"><a class="nav-link" href="{{.Path `about-website`}}">About Website</a></li>
           </ul>
         </div>
       {{end}}
     </nav>
     <div class="container">
       <br>
+      {{with .Alert}}
+        <div class="alert alert-{{.Type}}" role="alert">{{.Message}}</div>
+        <br>
+      {{end}}
       {{block "content" .}}{{end}}
       <br>
     </div>

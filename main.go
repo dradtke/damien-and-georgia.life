@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -24,8 +25,9 @@ import (
 )
 
 const (
-	Port           = 8080
-	AuthCookieName = "auth"
+	Port            = 8080
+	AuthCookieName  = "auth"
+	AlertCookieName = "alerts"
 )
 
 var (
@@ -39,17 +41,8 @@ func accessGranted(r *http.Request) bool {
 		return true
 	}
 
-	cookie, err := r.Cookie(AuthCookieName)
-	if err != nil {
-		return false
-	}
-
-	var value string
-	if err = sc.Decode(AuthCookieName, cookie.Value, &value); err != nil {
-		return false
-	}
-
-	return value == "authenticated"
+	value, err := Cookie(r, AuthCookieName)
+	return err == nil && value == "authenticated"
 }
 
 func mustLogin(w http.ResponseWriter, r *http.Request) {
@@ -80,8 +73,19 @@ func PageHandler(name string) http.Handler {
 		t = template.Must(template.New("").ParseFiles(
 			"templates/_base.html", "templates/"+name+".html",
 		))
+
+		data := TemplateData{r: r}
+		if alert, err := r.Cookie(AlertCookieName); err == nil {
+			parts := strings.Split(alert.Value, "=")
+			data.Alert = &Alert{Type: parts[0], Message: parts[1]}
+			http.SetCookie(w, &http.Cookie{
+				Name:   AlertCookieName,
+				MaxAge: -1,
+			})
+		}
+
 		log.Println("viewing " + name + ": " + r.RemoteAddr)
-		if err := t.ExecuteTemplate(w, "_base.html", &TemplateData{r: r}); err != nil {
+		if err := t.ExecuteTemplate(w, "_base.html", &data); err != nil {
 			panic(err)
 		}
 	})
@@ -136,8 +140,12 @@ func LoginHandler() http.Handler {
 		if err != nil {
 			panic(err)
 		}
-		password := []byte(r.PostFormValue("Password"))
+		password := []byte(strings.ToLower(r.PostFormValue("Password")))
 		if err := bcrypt.CompareHashAndPassword(hash, password); err != nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:  AlertCookieName,
+				Value: "danger=Invalid password, please try again.",
+			})
 			http.Redirect(w, r, r.Referer(), http.StatusFound)
 			return
 		}
@@ -166,8 +174,30 @@ func Recover(next http.Handler) http.Handler {
 	})
 }
 
+func Cookie(r *http.Request, name string) (string, error) {
+	cookie, err := r.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+
+	var value string
+	if err = sc.Decode(name, cookie.Value, &value); err != nil {
+		return "", err
+	}
+
+	return value, nil
+}
+
+func SetCookie(w http.ResponseWriter, name, value string) {
+}
+
 type TemplateData struct {
-	r *http.Request
+	r     *http.Request
+	Alert *Alert
+}
+
+type Alert struct {
+	Type, Message string
 }
 
 func (d *TemplateData) CSRFToken() string {
@@ -197,6 +227,9 @@ func (d *TemplateData) Path(name string, pairs ...string) string {
 
 func (d *TemplateData) Photos() []string {
 	photos, _ := filepath.Glob("static/pictures/*")
+	for _, p := range photos {
+		fmt.Println("found photo: " + p)
+	}
 	// shuffle: https://stackoverflow.com/a/12267471/823762
 	for i := range photos {
 		j := rand.Intn(i + 1)
@@ -247,8 +280,10 @@ func main() {
 		"about-us",
 		"the-wedding",
 		"chicago",
+		"accommodations",
 		"photos",
 		"rsvp",
+		"about-website",
 	} {
 		router.Handle("/"+p, PageHandler(p)).Methods("GET").Name(p)
 	}

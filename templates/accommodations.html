@@ -1,0 +1,31 @@
+{{define "content"}}
+  <h1 class="display-4">
+    Accommodations
+  </h1>
+  <hr>
+  <p>
+    For those who need a hotel, we have a room block available at Chicago South Loop Hotel.
+    Book with the button below to be automatically included in our group.
+  </p>
+
+  <br>
+
+  <div class="text-center">
+    <a href="http://uscsl.webhotel.microsdc.us/bp/search_rooms.jsp?groupCode=100518PIST" target="_blank" class="btn btn-primary">
+      Click Here to Book
+    </a>
+
+    <br><br><br>
+
+    <iframe
+      width="600"
+      height="450"
+      style="max-width: 100%;"
+      frameborder="0" style="border:0"
+      src="https://www.google.com/maps/embed/v1/place?key={{.GoogleAPIKey}}
+        &q=Chicago+South+Loop+Hotel+11+W+26th+St,+Chicago+IL+60616" allowfullscreen>
+    </iframe>
+  </div>
+
+  <br><br>
+{{end}}
