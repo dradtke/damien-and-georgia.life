@@ -106,7 +106,7 @@ func RSVPFormHandler() http.Handler {
 			plusOneName = r.PostFormValue("PlusOneName")
 		)
 
-		if _, err := db.Exec("insert into rsvp (full_nam, attending, plus_one, plus_one_full_name) values ($1, $2, $3, $4)", fullName, attending, plusOne, plusOneName); err != nil {
+		if _, err := db.Exec("insert into rsvp (full_name, attending, plus_one, plus_one_full_name) values ($1, $2, $3, $4)", fullName, attending, plusOne, plusOneName); err != nil {
 			if rerr := errt.ExecuteTemplate(w, "_base.html", &struct {
 				TemplateData
 				Err error
