@@ -227,9 +227,6 @@ func (d *TemplateData) Path(name string, pairs ...string) string {
 
 func (d *TemplateData) Photos() []string {
 	photos, _ := filepath.Glob("static/pictures/*")
-	for _, p := range photos {
-		fmt.Println("found photo: " + p)
-	}
 	// shuffle: https://stackoverflow.com/a/12267471/823762
 	for i := range photos {
 		j := rand.Intn(i + 1)
