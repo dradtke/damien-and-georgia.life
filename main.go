@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -13,7 +14,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -28,12 +31,18 @@ const (
 	Port            = 8080
 	AuthCookieName  = "auth"
 	AlertCookieName = "alerts"
+
+	CookieKey = "O0lSuL+o85YmkrPSdcqmG/yFnehNVkt8s4IkbAy8WcH+5/kS7jxxqk09mmoxhMOZ1tcnldS5MQxSXMM4q60+RA=="
 )
 
 var (
 	db     *sql.DB
 	router *mux.Router
-	sc     = securecookie.New(securecookie.GenerateRandomKey(64), nil)
+	sc     *securecookie.SecureCookie
+	hits   = struct {
+		sync.RWMutex
+		n int
+	}{}
 )
 
 func accessGranted(r *http.Request) bool {
@@ -68,6 +77,8 @@ func PageHandler(name string) http.Handler {
 			mustLogin(w, r)
 			return
 		}
+
+		Hit()
 
 		// TODO: remove this when things are stabilized
 		t = template.Must(template.New("").ParseFiles(
@@ -256,8 +267,40 @@ func (d *TemplateData) GoogleAPIKey() string {
 	return os.Getenv("GOOGLE_API_KEY")
 }
 
+func Hit() {
+	hits.Lock()
+	defer hits.Unlock()
+
+	hits.n++
+	if err := ioutil.WriteFile("hits", []byte(strconv.Itoa(hits.n)+"\n"), 0644); err != nil {
+		log.Println("error writing hits: " + err.Error())
+	}
+}
+
+func HitsHandler(w http.ResponseWriter, r *http.Request) {
+	hits.RLock()
+	defer hits.RUnlock()
+	w.Write([]byte(strconv.Itoa(hits.n) + "\n"))
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
+	key, err := base64.StdEncoding.DecodeString(CookieKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sc = securecookie.New(key, nil)
+
+	if b, err := ioutil.ReadFile("hits"); err != nil {
+		log.Println("failed to read hits file: " + err.Error())
+	} else {
+		s := strings.TrimSpace(string(b))
+		if hits.n, err = strconv.Atoi(s); err != nil {
+			log.Println("failed to read hits file: " + err.Error())
+		} else {
+			log.Printf("current hits: %d", hits.n)
+		}
+	}
 
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", Port))
 	if err != nil {
@@ -289,6 +332,7 @@ func main() {
 	router.PathPrefix("/static/").Methods("GET").Handler(
 		http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))),
 	)
+	router.HandleFunc("/hits", HitsHandler).Methods("GET")
 
 	chain := alice.New(
 		Recover,
