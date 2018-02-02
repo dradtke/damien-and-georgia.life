@@ -283,6 +283,51 @@ func HitsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(strconv.Itoa(hits.n) + "\n"))
 }
 
+func ViewRSVPsHandler(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.Query("select * from rsvp")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var attendingList, notAttendingList []string
+	for rows.Next() {
+		var (
+			id                        int
+			fullName, plusOneFullName string
+			attending, plusOne        bool
+		)
+		if err := rows.Scan(&id, &fullName, &attending, &plusOne, &plusOneFullName); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if attending {
+			line := fullName
+			if plusOne {
+				line += " (+ " + plusOneFullName + ")"
+			}
+			attendingList = append(attendingList, line)
+		} else {
+			line := fullName
+			if plusOne {
+				line += " (+ " + plusOneFullName + ")"
+			}
+			notAttendingList = append(notAttendingList, line)
+		}
+	}
+
+	w.Write([]byte("<strong>Attending</strong><br>"))
+	for _, line := range attendingList {
+		w.Write([]byte(line + "<br>"))
+	}
+
+	w.Write([]byte("<br><strong>Not Attending</strong><br>"))
+	for _, line := range notAttendingList {
+		w.Write([]byte(line + "<br>"))
+	}
+}
+
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	key, err := base64.StdEncoding.DecodeString(CookieKey)
@@ -333,6 +378,7 @@ func main() {
 		http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))),
 	)
 	router.HandleFunc("/hits", HitsHandler).Methods("GET")
+	router.HandleFunc("/rrssvvpp", ViewRSVPsHandler).Methods("GET")
 
 	chain := alice.New(
 		Recover,
