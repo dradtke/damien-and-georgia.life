@@ -73,10 +73,12 @@ func PageHandler(name string) http.Handler {
 		"templates/_base.html", "templates/"+name+".html",
 	))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !accessGranted(r) {
-			mustLogin(w, r)
-			return
-		}
+		/*
+			if !accessGranted(r) {
+				mustLogin(w, r)
+				return
+			}
+		*/
 
 		Hit()
 
@@ -369,6 +371,7 @@ func main() {
 		"photos",
 		"rsvp",
 		"about-website",
+		"recipes",
 	} {
 		router.Handle("/"+p, PageHandler(p)).Methods("GET").Name(p)
 	}
